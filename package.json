@@ -1,8 +1,0 @@
-{
-  "name": "godgram",
-  "version": "1.0.0",
-  "description": "Godgram messenger",
-  "main": "server.js",
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=18" }
-}
