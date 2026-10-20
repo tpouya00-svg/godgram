@@ -66,8 +66,19 @@ http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
     res.write(':ok\n\n');
     (clients[me] = clients[me] || new Set()).add(res);
+    const announce = on => Object.keys(clients).forEach(x => push(x, { type: 'presence', u: me, online: on, t: Date.now() }));
+    if (clients[me].size === 1) announce(true);
     const beat = setInterval(() => res.write(':hb\n\n'), 25000);
-    return req.on('close', () => { clearInterval(beat); clients[me].delete(res); });
+    return req.on('close', () => {
+      clearInterval(beat); clients[me].delete(res);
+      if (!clients[me].size) { db.users[me].lastSeen = Date.now(); save(); announce(false); }
+    });
+  }
+
+  if (p === '/api/presence') {
+    const u = url.searchParams.get('u');
+    if (!db.users[u]) return json(res, 404, {});
+    return json(res, 200, { online: !!(clients[u] && clients[u].size), lastSeen: db.users[u].lastSeen || 0 });
   }
 
   if (p === '/api/users') {
